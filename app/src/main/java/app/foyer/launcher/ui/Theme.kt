@@ -1,0 +1,50 @@
+package app.foyer.launcher.ui
+
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.unit.dp
+
+object Palette {
+    val Ink = Color(0xFF08090C)
+    val Text = Color.White
+    val Dim = Color.White.copy(alpha = 0.72f)
+    val Faint = Color.White.copy(alpha = 0.5f)
+    /** Pre-tinted fill used instead of live blur: looks the same at TV distance, costs nothing. */
+    val Glass = Color(0xB8151619)
+    val GlassFocused = Color(0x40FFFFFF)
+    val Stroke = Color(0x26FFFFFF)
+    val Accent = Color(0xFFF2C27A)
+    val Good = Color(0xFF8FD6A0)
+}
+
+object Icons {
+    private fun stroke(name: String, vararg paths: String): ImageVector {
+        val b = ImageVector.Builder(name, 24.dp, 24.dp, 24f, 24f)
+        paths.forEach {
+            b.addPath(
+                pathData = PathParser().parsePathString(it).toNodes(),
+                stroke = SolidColor(Color.White),
+                strokeLineWidth = 2f,
+                strokeLineCap = StrokeCap.Round,
+                strokeLineJoin = StrokeJoin.Round,
+            )
+        }
+        return b.build()
+    }
+
+    val Search = stroke("search", "M11 4a7 7 0 1 1 0 14a7 7 0 0 1 0-14z", "M20 20l-4-4")
+    val Settings = stroke(
+        "settings",
+        "M4 7h9", "M17 7h3", "M15 5v4",
+        "M4 17h3", "M11 17h9", "M9 15v4",
+    )
+    val Play: ImageVector = ImageVector.Builder("play", 24.dp, 24.dp, 24f, 24f).addPath(
+        pathData = PathParser().parsePathString("M7 4.5v15l12.5-7.5z").toNodes(),
+        fill = SolidColor(Color.White),
+    ).build()
+    val Download = stroke("download", "M12 4v11", "M7 10l5 5 5-5", "M5 20h14")
+}
