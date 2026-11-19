@@ -1,7 +1,7 @@
 package app.foyer.launcher.data
 
 /**
- * Streaming services Foyer knows how to hand off to. [match] is compared against
+ * Streaming services Froyer knows how to hand off to. [match] is compared against
  * TMDB provider names; [packages] are the Android TV app ids, first one preferred.
  *
  * Package ids must be checked on a real TV before release: some services ship a

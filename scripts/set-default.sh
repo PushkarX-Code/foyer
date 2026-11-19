@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Makes Foyer the only home screen by switching off the TV's built-in one.
+# Makes Froyer the only home screen by switching off the TV's built-in one.
 # Nothing is deleted: scripts/restore.sh switches it back on.
 # Usage: scripts/set-default.sh [tv-ip]
 source "$(dirname "$0")/_connect.sh"
@@ -12,7 +12,7 @@ HOMES=$($A shell cmd package query-activities --components -a android.intent.act
 CANDIDATES=$(echo "$HOMES" | grep -viE 'settings|setup|fallback' || true)
 
 if [ -z "$CANDIDATES" ]; then
-  echo "No other home screen found. Press Home on the remote; Foyer should open."
+  echo "No other home screen found. Press Home on the remote; Froyer should open."
   exit 0
 fi
 

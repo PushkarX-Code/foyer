@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Collects what we need to tune Foyer for this TV. Changes nothing on the TV.
+# Collects what we need to tune Froyer for this TV. Changes nothing on the TV.
 # Usage: scripts/inspect-tv.sh [tv-ip]
 source "$(dirname "$0")/_connect.sh"
 OUT="tv-report.txt"

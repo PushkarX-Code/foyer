@@ -122,7 +122,7 @@ fun SettingsContent(
 
             Spacer(Modifier.height(28.dp))
             Heading("Home screen")
-            Body(if (state.isHome) "Foyer opens when you press Home." else "Foyer is not your home screen yet.")
+            Body(if (state.isHome) "Froyer opens when you press Home." else "Froyer is not your home screen yet.")
             if (!state.isHome) {
                 Spacer(Modifier.height(10.dp))
                 if (state.canChooseHome) {
@@ -140,7 +140,7 @@ fun SettingsContent(
             Heading("This TV")
             Info("Continue watching from other apps", when (state.watchNext) {
                 WatchNextAccess.AVAILABLE -> "Shared (${state.watchNextCount} items)"
-                WatchNextAccess.OWN_ONLY -> "Not shared with Foyer"
+                WatchNextAccess.OWN_ONLY -> "Not shared with Froyer"
                 WatchNextAccess.BLOCKED -> "Blocked by this TV"
                 WatchNextAccess.MISSING -> "Not supported"
             })

@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/showcase/hero.jpg" alt="Foyer home screen on a TV" width="100%"></p>
+<p align="center"><img src="docs/showcase/hero.jpg" alt="Froyer home screen on a TV" width="100%"></p>
 
 <p align="center"><b>A fast, ad-free home screen for Google TV and Android TV.</b><br>
 Real artwork, every app one press away, and a mode for every TV from 1.5 GB budget sets to flagships.</p>
@@ -12,14 +12,17 @@ Real artwork, every app one press away, and a mode for every TV from 1.5 GB budg
 
 Every screen above is rendered from the app's own code (see Screenshot tests below), framed in `docs/showcase/src`.
 
-# Foyer
+<p align="center"><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/showcase/screens/lockup.png">
+  <img src="docs/showcase/screens/lockup-dark.png" alt="Froyer" width="320">
+</picture></p>
 
-Working name; it can be renamed freely until the first Play Store release.
+# Froyer
 
 It replaces the TV's home screen only. Streaming apps, sign-ins and 4K/HDR playback
 stay exactly as they are, because they still run in their own certified apps.
 
-## What phase 1 does
+## What it does
 
 - Full-screen artwork of what's trending, with the official title logo, where it
   streams in your country, and one button that opens it in the right app (or its
@@ -48,7 +51,7 @@ Without an artwork key the home screen falls back to an app grid.
 4. Install, then press Home.
 
 Every push to `main` publishes a new build at the same address. Installing it again
-updates Foyer in place.
+updates Froyer in place.
 
 ## Make it the home screen on Google TV
 
