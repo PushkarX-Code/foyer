@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -22,19 +21,34 @@ import androidx.compose.ui.unit.dp
 import app.foyer.launcher.HomeViewModel
 import app.foyer.launcher.Screen
 import app.foyer.launcher.data.Apps
+import app.foyer.launcher.data.TvApp
 import app.foyer.launcher.perf.DeviceProfile
 
 @Composable
 fun AppsScreen(vm: HomeViewModel, profile: DeviceProfile) {
     val ctx = LocalContext.current
+    AppsContent(
+        apps = vm.apps,
+        profile = profile,
+        onNavigate = { vm.screen = it },
+        onLaunchApp = { Apps.launch(ctx, it) },
+        onSearch = { Apps.openSearch(ctx) },
+    )
+}
+
+@Composable
+fun AppsContent(
+    apps: List<TvApp>,
+    profile: DeviceProfile,
+    onNavigate: (Screen) -> Unit,
+    onLaunchApp: (String) -> Unit,
+    onSearch: () -> Unit,
+) {
     val first = remember { FocusRequester() }
-    LaunchedEffect(vm.apps.isNotEmpty()) {
-        withFrameNanos { }
-        runCatching { first.requestFocus() }
-    }
+    LaunchedEffect(apps.isNotEmpty()) { first.requestFocusWhenReady() }
 
     Column(Modifier.fillMaxSize().background(Palette.Ink)) {
-        TopBar(Screen.APPS, onNavigate = { vm.screen = it }, onSearch = { Apps.openSearch(ctx) })
+        TopBar(Screen.APPS, onNavigate = onNavigate, onSearch = onSearch)
         Spacer(Modifier.height(22.dp))
         RowTitle("All apps")
         LazyVerticalGrid(
@@ -43,11 +57,11 @@ fun AppsScreen(vm: HomeViewModel, profile: DeviceProfile) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            itemsIndexed(vm.apps, key = { _, a -> a.pkg }) { i, app ->
+            itemsIndexed(apps, key = { _, a -> a.pkg }) { i, app ->
                 AppTile(
                     app = app,
                     profile = profile,
-                    onClick = { Apps.launch(ctx, app.pkg) },
+                    onClick = { onLaunchApp(app.pkg) },
                     modifier = if (i == 0) Modifier.focusRequester(first) else Modifier,
                 )
             }

@@ -1,7 +1,20 @@
+<p align="center"><img src="docs/showcase/hero.jpg" alt="Foyer home screen on a TV" width="100%"></p>
+
+<p align="center"><b>A fast, ad-free home screen for Google TV and Android TV.</b><br>
+Real artwork, every app one press away, and a mode for every TV from 1.5 GB budget sets to flagships.</p>
+
+<p align="center"><a href="https://github.com/PushkarX-Code/foyer/releases/latest/download/foyer.apk"><b>Download the latest build</b></a> · <a href="#install-on-a-tv-no-computer-needed">Install on a TV</a></p>
+
+<img src="docs/showcase/pick.jpg" alt="Pick a title and it opens in the right app" width="100%">
+<img src="docs/showcase/apps.jpg" alt="All your apps, one press away" width="100%">
+<img src="docs/showcase/fast.jpg" alt="Lite, Standard and Premium performance modes" width="100%">
+<img src="docs/showcase/facts.jpg" alt="1.2 MB download, no ads, no trackers" width="100%">
+
+Every screen above is rendered from the app's own code (see Screenshot tests below), framed in `docs/showcase/src`.
+
 # Foyer
 
-A fast, ad-free home screen for Android TV and Google TV. Working name; it can be
-renamed freely until the first Play Store release.
+Working name; it can be renamed freely until the first Play Store release.
 
 It replaces the TV's home screen only. Streaming apps, sign-ins and 4K/HDR playback
 stay exactly as they are, because they still run in their own certified apps.
@@ -31,7 +44,7 @@ Without an artwork key the home screen falls back to an app grid.
 2. Settings > Device Preferences > Security & restrictions: allow Downloader to
    install unknown apps. On some Google TVs this is under Apps > Security.
 3. Open Downloader and enter
-   `https://github.com/<owner>/<repo>/releases/download/latest/foyer.apk`
+   `github.com/PushkarX-Code/foyer/releases/latest/download/foyer.apk`
 4. Install, then press Home.
 
 Every push to `main` publishes a new build at the same address. Installing it again
@@ -74,7 +87,12 @@ Render the home screen without a TV:
 FOYER_ART_DIR=/path/to/sample/art ./gradlew recordPaparazziDebug
 ```
 
-Images land in `app/src/test/snapshots/images` (not committed).
+Images land in `app/src/test/snapshots/images` (not committed). To rebuild the
+showcase, copy them into `docs/showcase/screens/` and run
+`node docs/showcase/src/render.js` (needs Playwright).
+
+Film and series artwork shown in the showcase belongs to its owners and is used to
+illustrate the app; it comes from TMDB.
 
 ## Signing
 

@@ -20,7 +20,10 @@ import app.foyer.launcher.data.WatchNextAccess
 import app.foyer.launcher.data.WatchNextResult
 import app.foyer.launcher.perf.DeviceProfile
 import app.foyer.launcher.perf.Tier
+import app.foyer.launcher.ui.AppsContent
 import app.foyer.launcher.ui.HomeContent
+import app.foyer.launcher.ui.SettingsContent
+import app.foyer.launcher.ui.SettingsState
 import app.foyer.launcher.ui.HomeState
 import app.foyer.launcher.ui.Palette
 import coil3.ImageLoader
@@ -53,6 +56,7 @@ class ScreenshotTest {
         // The renderer bundled with Paparazzi 1.3 is Android 14; render as 34 so Compose
         // does not call text APIs that renderer lacks.
         environment = detectEnvironment().copy(compileSdkVersion = 34),
+        useDeviceResolution = true,
     )
 
     private val artDir = System.getProperty("foyer.art")?.let(::File)
@@ -130,4 +134,33 @@ class ScreenshotTest {
         HomeState(apps, emptyList(), null, ArtworkState.NO_KEY, WatchNextResult(WatchNextAccess.BLOCKED, emptyList())),
         Tier.LITE,
     )
+
+    @Test
+    fun appsGrid() = paparazzi.snapshot {
+        Frame {
+            val more = listOf("twitch", "applemusic", "kodi", "mubi", "tubi", "jellyfin", "youtubemusic")
+                .map { TvApp(it, it, art("banner_$it.png").asImageBitmap(), true) }
+            AppsContent(apps + more, profile(Tier.LITE), {}, {}, {})
+        }
+    }
+
+    @Test
+    fun settings() = paparazzi.snapshot {
+        Frame {
+            SettingsContent(
+                state = SettingsState(
+                    profile = profile(Tier.LITE),
+                    tierOverride = null,
+                    isHome = true,
+                    canChooseHome = false,
+                    watchNext = WatchNextAccess.BLOCKED,
+                    watchNextCount = 0,
+                    artwork = ArtworkState.READY,
+                    region = "IN",
+                    version = "0.1.3",
+                ),
+                onSetTier = {}, onChooseHome = {}, onOpenTvSettings = {}, onNavigate = {}, onSearch = {},
+            )
+        }
+    }
 }

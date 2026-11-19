@@ -40,9 +40,6 @@ import app.foyer.launcher.perf.Tier
 fun SettingsScreen(vm: HomeViewModel, profile: DeviceProfile) {
     val ctx = LocalContext.current
     val app = ctx.applicationContext as FoyerApp
-    val first = remember { FocusRequester() }
-    LaunchedEffect(Unit) { runCatching { first.requestFocus() } }
-
     val pm = ctx.packageManager
     val isHome = remember {
         pm.resolveActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), PackageManager.MATCH_DEFAULT_ONLY)
@@ -51,9 +48,53 @@ fun SettingsScreen(vm: HomeViewModel, profile: DeviceProfile) {
     val homeSettings = remember {
         Intent(Settings.ACTION_HOME_SETTINGS).takeIf { it.resolveActivity(pm) != null }
     }
+    SettingsContent(
+        state = SettingsState(
+            profile = profile,
+            tierOverride = app.prefs.tierOverride,
+            isHome = isHome,
+            canChooseHome = homeSettings != null,
+            watchNext = vm.watchNext.access,
+            watchNextCount = vm.watchNext.items.size,
+            artwork = vm.artwork,
+            region = vm.region(),
+            version = BuildConfig.VERSION_NAME,
+        ),
+        onSetTier = app::setTier,
+        onChooseHome = { homeSettings?.let { Apps.start(ctx, it) } },
+        onOpenTvSettings = { Apps.start(ctx, Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) },
+        onNavigate = { vm.screen = it },
+        onSearch = { Apps.openSearch(ctx) },
+    )
+}
+
+data class SettingsState(
+    val profile: DeviceProfile,
+    val tierOverride: Tier?,
+    val isHome: Boolean,
+    val canChooseHome: Boolean,
+    val watchNext: WatchNextAccess,
+    val watchNextCount: Int,
+    val artwork: ArtworkState,
+    val region: String,
+    val version: String,
+)
+
+@Composable
+fun SettingsContent(
+    state: SettingsState,
+    onSetTier: (Tier?) -> Unit,
+    onChooseHome: () -> Unit,
+    onOpenTvSettings: () -> Unit,
+    onNavigate: (Screen) -> Unit,
+    onSearch: () -> Unit,
+) {
+    val profile = state.profile
+    val first = remember { FocusRequester() }
+    LaunchedEffect(Unit) { first.requestFocusWhenReady() }
 
     Column(Modifier.fillMaxSize().background(Palette.Ink).verticalScroll(rememberScrollState())) {
-        TopBar(Screen.SETTINGS, onNavigate = { vm.screen = it }, onSearch = { Apps.openSearch(ctx) })
+        TopBar(Screen.SETTINGS, onNavigate = onNavigate, onSearch = onSearch)
         Column(Modifier.padding(start = 48.dp, end = 48.dp, top = 28.dp, bottom = 40.dp).widthIn(max = 620.dp)) {
 
             Heading("Performance")
@@ -63,10 +104,10 @@ fun SettingsScreen(vm: HomeViewModel, profile: DeviceProfile) {
             )
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                PillButton("Auto", !profile.isForced && app.prefs.tierOverride == null, { app.setTier(null) },
+                PillButton("Auto", state.tierOverride == null, { onSetTier(null) },
                     Modifier.focusRequester(first), height = 30.dp)
                 Tier.entries.forEach { t ->
-                    PillButton(t.label, app.prefs.tierOverride == t, { app.setTier(t) }, height = 30.dp)
+                    PillButton(t.label, state.tierOverride == t, { onSetTier(t) }, height = 30.dp)
                 }
             }
             Spacer(Modifier.height(6.dp))
@@ -81,11 +122,11 @@ fun SettingsScreen(vm: HomeViewModel, profile: DeviceProfile) {
 
             Spacer(Modifier.height(28.dp))
             Heading("Home screen")
-            Body(if (isHome) "Foyer opens when you press Home." else "Foyer is not your home screen yet.")
-            if (!isHome) {
+            Body(if (state.isHome) "Foyer opens when you press Home." else "Foyer is not your home screen yet.")
+            if (!state.isHome) {
                 Spacer(Modifier.height(10.dp))
-                if (homeSettings != null) {
-                    PillButton("Choose home app", false, { Apps.start(ctx, homeSettings) }, height = 30.dp)
+                if (state.canChooseHome) {
+                    PillButton("Choose home app", false, onChooseHome, height = 30.dp)
                     Spacer(Modifier.height(6.dp))
                 }
                 Body(
@@ -97,21 +138,21 @@ fun SettingsScreen(vm: HomeViewModel, profile: DeviceProfile) {
 
             Spacer(Modifier.height(28.dp))
             Heading("This TV")
-            Info("Continue watching from other apps", when (vm.watchNext.access) {
-                WatchNextAccess.AVAILABLE -> "Shared (${vm.watchNext.items.size} items)"
+            Info("Continue watching from other apps", when (state.watchNext) {
+                WatchNextAccess.AVAILABLE -> "Shared (${state.watchNextCount} items)"
                 WatchNextAccess.OWN_ONLY -> "Not shared with Foyer"
                 WatchNextAccess.BLOCKED -> "Blocked by this TV"
                 WatchNextAccess.MISSING -> "Not supported"
             })
-            Info("Artwork", when (vm.artwork) {
+            Info("Artwork", when (state.artwork) {
                 ArtworkState.READY -> "Connected"
                 ArtworkState.LOADING -> "Loading"
                 ArtworkState.NO_KEY -> "Not set up in this build"
                 ArtworkState.FAILED -> "Can't reach the artwork service"
             })
-            Info("Region for streaming availability", vm.region())
+            Info("Region for streaming availability", state.region)
             Info("Low-RAM device flag", if (profile.lowRamFlag) "Yes" else "No")
-            Info("Version", BuildConfig.VERSION_NAME)
+            Info("Version", state.version)
             Spacer(Modifier.height(10.dp))
             Body(
                 "Film and series data and artwork from TMDB. This product uses the TMDB API " +
@@ -119,7 +160,7 @@ fun SettingsScreen(vm: HomeViewModel, profile: DeviceProfile) {
                 faint = true,
             )
             Spacer(Modifier.height(14.dp))
-            PillButton("Open TV settings", false, { Apps.start(ctx, Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }, height = 30.dp)
+            PillButton("Open TV settings", false, onOpenTvSettings, height = 30.dp)
         }
     }
 }

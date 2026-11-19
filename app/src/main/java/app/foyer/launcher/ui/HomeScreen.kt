@@ -29,7 +29,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
@@ -119,8 +118,7 @@ fun HomeContent(
 
     LaunchedEffect(state.homePresses, showHero, state.apps.isNotEmpty()) {
         scroll.scrollTo(0)
-        withFrameNanos { }  // let lazy rows lay out so the target exists
-        runCatching { primaryFocus.requestFocus() }
+        primaryFocus.requestFocusWhenReady()
     }
 
     Box(Modifier.fillMaxSize().background(Palette.Ink)) {
