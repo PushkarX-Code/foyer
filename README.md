@@ -9,7 +9,7 @@ Real artwork, every app one press away, and a mode for every TV from 1.5 GB budg
 <img src="docs/showcase/browse.jpg" alt="Movies, shows and your list" width="100%">
 <img src="docs/showcase/apps.jpg" alt="All your apps, one press away" width="100%">
 <img src="docs/showcase/fast.jpg" alt="Lite, Standard and Premium performance modes" width="100%">
-<img src="docs/showcase/facts.jpg" alt="1.2 MB download, no ads, no trackers" width="100%">
+<img src="docs/showcase/facts.jpg" alt="1.5 MB download, no ads, no trackers" width="100%">
 
 Every screen above is rendered from the app's own code (see Screenshot tests below), framed in `docs/showcase/src`.
 

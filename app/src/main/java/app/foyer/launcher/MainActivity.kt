@@ -9,17 +9,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.addCallback
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.graphics.Color
 import androidx.core.content.ContextCompat
-import androidx.tv.material3.LocalContentColor
-import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.darkColorScheme
 import app.foyer.launcher.ui.AppsScreen
 import app.foyer.launcher.ui.BrowseScreen
+import app.foyer.launcher.ui.FroyerTheme
 import app.foyer.launcher.ui.LibraryScreen
 import app.foyer.launcher.ui.HomeScreen
-import app.foyer.launcher.ui.Palette
 import app.foyer.launcher.ui.SettingsScreen
 
 class MainActivity : ComponentActivity() {
@@ -42,16 +37,14 @@ class MainActivity : ComponentActivity() {
         setContent {
             val profile = app.profile ?: return@setContent
             val loader = app.imageLoader ?: return@setContent
-            MaterialTheme(colorScheme = darkColorScheme(background = Palette.Ink, surface = Palette.Ink)) {
-                CompositionLocalProvider(LocalContentColor provides Color.White) {
-                    when (vm.screen) {
-                        Screen.HOME -> HomeScreen(vm, profile, loader)
-                        Screen.MOVIES -> BrowseScreen(vm, "movie", profile, loader)
-                        Screen.SHOWS -> BrowseScreen(vm, "tv", profile, loader)
-                        Screen.APPS -> AppsScreen(vm, profile)
-                        Screen.LIBRARY -> LibraryScreen(vm, profile, loader)
-                        Screen.SETTINGS -> SettingsScreen(vm, profile)
-                    }
+            FroyerTheme {
+                when (vm.screen) {
+                    Screen.HOME -> HomeScreen(vm, profile, loader)
+                    Screen.MOVIES -> BrowseScreen(vm, "movie", profile, loader)
+                    Screen.SHOWS -> BrowseScreen(vm, "tv", profile, loader)
+                    Screen.APPS -> AppsScreen(vm, profile)
+                    Screen.LIBRARY -> LibraryScreen(vm, profile, loader)
+                    Screen.SETTINGS -> SettingsScreen(vm, profile)
                 }
             }
         }

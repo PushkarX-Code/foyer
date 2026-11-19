@@ -1,6 +1,18 @@
 package app.foyer.launcher.ui
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import androidx.tv.material3.LocalContentColor
+import androidx.tv.material3.LocalTextStyle
+import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.darkColorScheme
+import app.foyer.launcher.R
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
@@ -49,4 +61,24 @@ object Icons {
     val Plus = stroke("plus", "M12 5v14", "M5 12h14")
     val Check = stroke("check", "M5 12.5l4.5 4.5L19 7")
     val Download = stroke("download", "M12 4v11", "M7 10l5 5 5-5", "M5 20h14")
+}
+
+/** Inter, bundled (Latin subset) so every TV renders the same type regardless of its system font. */
+val Inter = FontFamily(
+    Font(R.font.inter_regular, FontWeight.Normal),
+    Font(R.font.inter_medium, FontWeight.Medium),
+    Font(R.font.inter_semibold, FontWeight.SemiBold),
+    Font(R.font.inter_bold, FontWeight.Bold),
+)
+
+@Composable
+fun FroyerTheme(content: @Composable () -> Unit) {
+    MaterialTheme(colorScheme = darkColorScheme(background = Palette.Ink, surface = Palette.Ink)) {
+        CompositionLocalProvider(
+            LocalContentColor provides Color.White,
+            // Material's TV text styles add wide letter spacing meant for Roboto; Inter
+            // is designed to sit tight.
+            LocalTextStyle provides TextStyle(fontFamily = Inter, fontWeight = FontWeight.Normal, letterSpacing = 0.sp),
+        ) { content() }
+    }
 }

@@ -28,7 +28,7 @@ import app.foyer.launcher.ui.HomeContent
 import app.foyer.launcher.ui.SettingsContent
 import app.foyer.launcher.ui.SettingsState
 import app.foyer.launcher.ui.HomeState
-import app.foyer.launcher.ui.Palette
+import app.foyer.launcher.ui.FroyerTheme
 import coil3.ImageLoader
 import coil3.asImage
 import coil3.compose.AsyncImagePreviewHandler
@@ -43,6 +43,7 @@ import java.io.File
  * Renders the real home screen code at 1080p without a TV. Run with
  * FOYER_ART_DIR pointing at sample artwork:  ./gradlew recordPaparazziDebug
  */
+@OptIn(coil3.annotation.ExperimentalCoilApi::class)
 class ScreenshotTest {
 
     @get:Rule
@@ -97,9 +98,8 @@ class ScreenshotTest {
         val handler = AsyncImagePreviewHandler { request ->
             art(request.data.toString().substringAfterLast('/')).asImage()
         }
-        MaterialTheme(colorScheme = darkColorScheme(background = Palette.Ink, surface = Palette.Ink)) {
+        FroyerTheme {
             CompositionLocalProvider(
-                LocalContentColor provides Color.White,
                 LocalAsyncImagePreviewHandler provides handler,
                 LocalInspectionMode provides true,
             ) { content() }

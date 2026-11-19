@@ -278,7 +278,7 @@ internal fun HeroInfo(
                 alignment = Alignment.CenterStart,
             )
         } else {
-            Text(title.name, fontSize = 34.sp, fontWeight = FontWeight.Bold, maxLines = 2, lineHeight = 36.sp)
+            Text(title.name, fontSize = 34.sp, fontWeight = FontWeight.Bold, maxLines = 2, lineHeight = 36.sp, letterSpacing = (-0.6).sp)
         }
         Spacer(Modifier.height(14.dp))
         val service = when (action) {
