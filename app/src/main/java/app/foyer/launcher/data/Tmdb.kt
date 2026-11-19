@@ -46,16 +46,34 @@ class Tmdb(private val token: String, private val http: OkHttpClient, private va
     fun cacheIsFresh(): Boolean =
         cacheFile.exists() && System.currentTimeMillis() - cacheFile.lastModified() < 6 * 3600_000L
 
+    /**
+     * What's popular and actually streamable in [region]: this week's trending titles
+     * first, topped up with the most popular streaming films and series. Cinema-only
+     * releases are left out, since every card has to open in an app.
+     */
     suspend fun fetch(region: String): List<Title> = withContext(Dispatchers.IO) {
-        val trending = get("/trending/all/week?language=en-US").getJSONArray("results")
-        val picks = (0 until trending.length()).map { trending.getJSONObject(it) }
-            .filter { it.optString("media_type") in setOf("movie", "tv") && it.optString("backdrop_path").isNotBlank() }
-            .take(20)
+        val streaming = "watch_region=$region&with_watch_monetization_types=flatrate&sort_by=popularity.desc&language=en-US"
+        val candidates = LinkedHashMap<String, JSONObject>()
+        fun collect(path: String, type: String?) {
+            val results = runCatching { get(path).getJSONArray("results") }.getOrNull() ?: return
+            for (i in 0 until results.length()) {
+                val item = results.getJSONObject(i)
+                val t = type ?: item.optString("media_type")
+                if (t !in setOf("movie", "tv") || item.optString("backdrop_path").isBlank()) continue
+                item.put("media_type", t)
+                candidates.putIfAbsent("$t:${item.getInt("id")}", item)
+            }
+        }
+        collect("/trending/all/week?language=en-US", null)
+        collect("/discover/movie?$streaming", "movie")
+        collect("/discover/tv?$streaming", "tv")
 
         val gate = Semaphore(6)
         val titles = coroutineScope {
-            picks.map { item -> async { gate.withPermit { runCatching { details(item, region) }.getOrNull() } } }.awaitAll()
-        }.filterNotNull()
+            candidates.values.take(40).map { item ->
+                async { gate.withPermit { runCatching { details(item, region) }.getOrNull() } }
+            }.awaitAll()
+        }.filterNotNull().filter { it.providers.isNotEmpty() }.take(20)
 
         if (titles.isNotEmpty()) cacheFile.writeText(serialize(titles).toString())
         titles
@@ -96,10 +114,15 @@ class Tmdb(private val token: String, private val http: OkHttpClient, private va
     }
 
     private fun get(path: String): JSONObject {
+        // TMDB issues two kinds of credential: a 32-character v3 API key (sent as a
+        // query parameter) and a long v4 read token (sent as a Bearer header).
+        val isV3Key = token.length == 32 && token.all { it.isDigit() || it in 'a'..'f' }
+        val url = "https://api.themoviedb.org/3$path" +
+            if (isV3Key) (if ('?' in path) "&" else "?") + "api_key=$token" else ""
         val req = Request.Builder()
-            .url("https://api.themoviedb.org/3$path")
-            .header("Authorization", "Bearer $token")
+            .url(url)
             .header("Accept", "application/json")
+            .apply { if (!isV3Key) header("Authorization", "Bearer $token") }
             .build()
         http.newCall(req).execute().use { res ->
             check(res.isSuccessful) { "TMDB ${res.code}" }

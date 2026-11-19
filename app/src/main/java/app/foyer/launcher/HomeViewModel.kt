@@ -120,5 +120,5 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun region(): String = Locale.getDefault().country.takeIf { it.length == 2 } ?: "US"
+    fun region(): String = Locale.getDefault().country.takeIf { it.length == 2 } ?: "US"
 }

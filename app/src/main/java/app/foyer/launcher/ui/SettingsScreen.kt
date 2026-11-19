@@ -109,8 +109,15 @@ fun SettingsScreen(vm: HomeViewModel, profile: DeviceProfile) {
                 ArtworkState.NO_KEY -> "Not set up in this build"
                 ArtworkState.FAILED -> "Can't reach the artwork service"
             })
+            Info("Region for streaming availability", vm.region())
             Info("Low-RAM device flag", if (profile.lowRamFlag) "Yes" else "No")
             Info("Version", BuildConfig.VERSION_NAME)
+            Spacer(Modifier.height(10.dp))
+            Body(
+                "Film and series data and artwork from TMDB. This product uses the TMDB API " +
+                    "but is not endorsed or certified by TMDB.",
+                faint = true,
+            )
             Spacer(Modifier.height(14.dp))
             PillButton("Open TV settings", false, { Apps.start(ctx, Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }, height = 30.dp)
         }

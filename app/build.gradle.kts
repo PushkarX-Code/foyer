@@ -5,7 +5,7 @@ plugins {
     id("app.cash.paparazzi")
 }
 
-// TMDB read-access token for artwork. Set TMDB_TOKEN in ~/.gradle/gradle.properties,
+// TMDB credential for artwork (v3 API key or v4 read token). Set TMDB_TOKEN in ~/.gradle/gradle.properties,
 // local.properties or the environment (CI uses a repository secret). Without it the
 // home screen falls back to the apps-only layout.
 val tmdbToken: String = providers.gradleProperty("TMDB_TOKEN")

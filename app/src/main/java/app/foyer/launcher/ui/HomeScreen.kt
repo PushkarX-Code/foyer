@@ -154,7 +154,7 @@ fun HomeContent(
             }
 
             if (showHero) {
-                RowTitle("Trending this week")
+                RowTitle("Popular to stream")
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 48.dp, vertical = 6.dp),
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
