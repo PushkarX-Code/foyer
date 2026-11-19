@@ -6,6 +6,7 @@ Real artwork, every app one press away, and a mode for every TV from 1.5 GB budg
 <p align="center"><a href="https://github.com/PushkarX-Code/foyer/releases/latest/download/foyer.apk"><b>Download the latest build</b></a> · <a href="#install-on-a-tv-no-computer-needed">Install on a TV</a></p>
 
 <img src="docs/showcase/pick.jpg" alt="Pick a title and it opens in the right app" width="100%">
+<img src="docs/showcase/browse.jpg" alt="Movies, shows and your list" width="100%">
 <img src="docs/showcase/apps.jpg" alt="All your apps, one press away" width="100%">
 <img src="docs/showcase/fast.jpg" alt="Lite, Standard and Premium performance modes" width="100%">
 <img src="docs/showcase/facts.jpg" alt="1.2 MB download, no ads, no trackers" width="100%">
@@ -29,6 +30,10 @@ stay exactly as they are, because they still run in their own certified apps.
   Play Store page if the app isn't installed).
 - Your installed apps as TV banners, streaming apps first, updated as you install or
   remove apps.
+- **Movies** and **Shows** tabs: rows of what streams in your country (popular,
+  top rated, Hindi in India, and by genre), each with a full-screen preview.
+- **Library**: titles you save with + on any preview, kept only on the TV, plus
+  continue watching where the TV allows it.
 - Search and voice through the TV's own search.
 - Three performance tiers picked from the TV's RAM and screen, switchable in
   Settings:
@@ -103,8 +108,8 @@ illustrate the app; it comes from TMDB.
 installs over the previous one. The Play Store release will use a separate private
 key that never goes in this repo.
 
-## Not in phase 1
+## Not built yet
 
-Movies/Shows/Library tabs, one-press install tiles for apps you don't have, the
+One-press install tiles for apps you don't have, the
 accessibility-based default-home method, real glass blur on Premium, and baseline
 profiles for faster startup.

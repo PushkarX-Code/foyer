@@ -65,6 +65,7 @@ fun SettingsScreen(vm: HomeViewModel, profile: DeviceProfile) {
         onOpenTvSettings = { Apps.start(ctx, Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) },
         onNavigate = { vm.screen = it },
         onSearch = { Apps.openSearch(ctx) },
+        tabs = if (vm.hasArtwork) AllTabs else AppsOnlyTabs,
     )
 }
 
@@ -88,13 +89,14 @@ fun SettingsContent(
     onOpenTvSettings: () -> Unit,
     onNavigate: (Screen) -> Unit,
     onSearch: () -> Unit,
+    tabs: List<Screen> = AllTabs,
 ) {
     val profile = state.profile
     val first = remember { FocusRequester() }
     LaunchedEffect(Unit) { first.requestFocusWhenReady() }
 
     Column(Modifier.fillMaxSize().background(Palette.Ink).verticalScroll(rememberScrollState())) {
-        TopBar(Screen.SETTINGS, onNavigate = onNavigate, onSearch = onSearch)
+        TopBar(Screen.SETTINGS, onNavigate = onNavigate, onSearch = onSearch, tabs = tabs)
         Column(Modifier.padding(start = 48.dp, end = 48.dp, top = 28.dp, bottom = 40.dp).widthIn(max = 620.dp)) {
 
             Heading("Performance")

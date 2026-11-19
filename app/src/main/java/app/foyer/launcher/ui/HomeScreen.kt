@@ -75,7 +75,10 @@ fun HomeScreen(vm: HomeViewModel, profile: DeviceProfile, loader: ImageLoader) {
             artwork = vm.artwork,
             watchNext = vm.watchNext,
             homePresses = vm.homePresses,
+            myList = vm.myList,
+            tabs = if (vm.hasArtwork) AllTabs else AppsOnlyTabs,
         ),
+        onToggleList = vm::toggleMyList,
         profile = profile,
         loader = loader,
         actionFor = vm::watchAction,
@@ -96,6 +99,8 @@ data class HomeState(
     val artwork: ArtworkState,
     val watchNext: WatchNextResult,
     val homePresses: Int = 0,
+    val myList: List<Title> = emptyList(),
+    val tabs: List<Screen> = AllTabs,
 )
 
 @Composable
@@ -109,6 +114,7 @@ fun HomeContent(
     onNavigate: (Screen) -> Unit,
     onLaunchApp: (String) -> Unit,
     onSearch: () -> Unit,
+    onToggleList: (Title) -> Unit = {},
 ) {
     val scroll = rememberScrollState()
     val scope = rememberCoroutineScope()
@@ -125,7 +131,7 @@ fun HomeContent(
         if (showHero) HeroBackdrop(hero!!, profile, loader)
 
         Column(Modifier.fillMaxSize().verticalScroll(scroll)) {
-            TopBar(Screen.HOME, onNavigate = onNavigate, onSearch = onSearch)
+            TopBar(Screen.HOME, onNavigate = onNavigate, onSearch = onSearch, tabs = state.tabs)
 
             if (showHero) {
                 Spacer(Modifier.height(58.dp))
@@ -139,6 +145,8 @@ fun HomeContent(
                         .focusRequester(primaryFocus)
                         .onFocusGained { scope.launch { scroll.animateScrollTo(0) } },
                     onAction = { onPerform(action) },
+                    inList = state.myList.any { it.id == hero.id && it.type == hero.type },
+                    onToggleList = { onToggleList(hero) },
                 )
                 Spacer(Modifier.height(26.dp))
             } else {
@@ -208,7 +216,7 @@ fun HomeContent(
 /** Full-bleed artwork behind the home screen. The previous image stays on screen
  *  until the next one is decoded, so switching never flashes black. */
 @Composable
-private fun HeroBackdrop(title: Title, profile: DeviceProfile, loader: ImageLoader) {
+internal fun HeroBackdrop(title: Title, profile: DeviceProfile, loader: ImageLoader) {
     val ctx = LocalContext.current
     var lastKey by remember { mutableStateOf<MemoryCache.Key?>(null) }
     Box(Modifier.fillMaxSize()) {
@@ -249,13 +257,15 @@ private fun HeroBackdrop(title: Title, profile: DeviceProfile, loader: ImageLoad
 }
 
 @Composable
-private fun HeroInfo(
+internal fun HeroInfo(
     title: Title,
     action: Watch,
     loader: ImageLoader,
     profile: DeviceProfile,
     buttonModifier: Modifier,
     onAction: () -> Unit,
+    inList: Boolean = false,
+    onToggleList: (() -> Unit)? = null,
 ) {
     Column(Modifier.padding(start = 48.dp).width(380.dp)) {
         if (title.logo != null) {
@@ -274,7 +284,7 @@ private fun HeroInfo(
         val service = when (action) {
             is Watch.Open -> action.label
             is Watch.Install -> action.label
-            is Watch.Search -> null
+            is Watch.Search, is Watch.Pending -> null
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             val parts = listOfNotNull(
@@ -304,7 +314,15 @@ private fun HeroInfo(
             )
         }
         Spacer(Modifier.height(16.dp))
-        WatchButton(action, buttonModifier, onAction)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            WatchButton(action, buttonModifier, onAction)
+            if (onToggleList != null) {
+                Spacer(Modifier.width(10.dp))
+                GlassBox(Modifier.size(34.dp), CircleShape) {
+                    RoundIconButton(if (inList) Icons.Check else Icons.Plus, if (inList) "Remove from My list" else "Add to My list", onToggleList, size = 34.dp)
+                }
+            }
+        }
     }
 }
 
@@ -319,6 +337,7 @@ private fun WatchButton(action: Watch, modifier: Modifier, onClick: () -> Unit) 
         is Watch.Open -> Icons.Play to "Watch on ${action.label}"
         is Watch.Install -> Icons.Download to "Get ${action.label}"
         is Watch.Search -> Icons.Search to "Find where to watch"
+        is Watch.Pending -> Icons.Play to "Watch"
     }
     Surface(
         onClick = onClick,
@@ -344,7 +363,7 @@ private fun WatchButton(action: Watch, modifier: Modifier, onClick: () -> Unit) 
 }
 
 @Composable
-private fun WatchNextRow(items: List<WatchNextItem>, profile: DeviceProfile, loader: ImageLoader) {
+internal fun WatchNextRow(items: List<WatchNextItem>, profile: DeviceProfile, loader: ImageLoader) {
     val ctx = LocalContext.current
     LazyRow(
         contentPadding = PaddingValues(horizontal = 48.dp, vertical = 6.dp),

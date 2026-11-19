@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import app.foyer.launcher.data.Apps
+import app.foyer.launcher.data.Row
 import app.foyer.launcher.data.Services
 import app.foyer.launcher.data.Title
 import app.foyer.launcher.data.TvApp
@@ -18,9 +19,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import java.util.Locale
 
-enum class Screen { HOME, APPS, SETTINGS }
+enum class Screen { HOME, MOVIES, SHOWS, APPS, LIBRARY, SETTINGS }
 
 enum class ArtworkState { LOADING, READY, NO_KEY, FAILED }
 
@@ -29,6 +31,8 @@ sealed interface Watch {
     data class Open(val label: String, val pkg: String) : Watch
     data class Install(val label: String, val pkg: String) : Watch
     data class Search(val query: String) : Watch
+    /** Details still loading: pressing it looks them up, then opens the right app. */
+    data class Pending(val title: Title) : Watch
 }
 
 class HomeViewModel(app: Application) : AndroidViewModel(app) {
@@ -49,13 +53,81 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     var homePresses by mutableStateOf(0)
         private set
 
+    /** Movies ("movie") and Shows ("tv") tabs: rows, load state and the title in the hero. */
+    var rows by mutableStateOf<Map<String, List<Row>>>(emptyMap())
+        private set
+    var rowsState by mutableStateOf<Map<String, ArtworkState>>(emptyMap())
+        private set
+    var browseHero by mutableStateOf<Map<String, Title?>>(emptyMap())
+        private set
+    var myList by mutableStateOf<List<Title>>(emptyList())
+        private set
+
     private var heroJob: Job? = null
+    private var browseJob: Job? = null
+    private val detailCache = HashMap<String, Title>()
 
     init {
         refreshApps()
         loadTitles()
         refreshWatchNext()
+        myList = runCatching { foyer.tmdb.parse(JSONArray(foyer.prefs.myList)) }.getOrDefault(emptyList())
     }
+
+    val hasArtwork: Boolean get() = foyer.tmdb.enabled
+
+    fun loadRows(type: String) {
+        if (!foyer.tmdb.enabled || rowsState[type] == ArtworkState.READY || rowsState[type] == ArtworkState.LOADING) return
+        rowsState = rowsState + (type to ArtworkState.LOADING)
+        viewModelScope.launch {
+            val result = runCatching { foyer.tmdb.browse(type, region(), foyer.cacheDir.resolve("browse_$type.json")) }.getOrNull()
+            if (result.isNullOrEmpty()) {
+                rowsState = rowsState + (type to ArtworkState.FAILED)
+            } else {
+                rows = rows + (type to result)
+                rowsState = rowsState + (type to ArtworkState.READY)
+                if (browseHero[type] == null) showInBrowseHero(type, result.first().items.first(), 0L)
+            }
+        }
+    }
+
+    /** Focus landed on a card in the Movies or Shows tab. */
+    fun previewBrowse(type: String, t: Title) = showInBrowseHero(type, t, foyer.profile?.heroDebounceMs ?: 200L)
+
+    private fun showInBrowseHero(type: String, t: Title, wait: Long) {
+        browseJob?.cancel()
+        browseJob = viewModelScope.launch {
+            delay(wait)
+            browseHero = browseHero + (type to (detailCache[key(t)] ?: t))
+            val full = detailed(t)
+            if (browseHero[type]?.id == t.id) browseHero = browseHero + (type to full)
+        }
+    }
+
+    /** Fetches logo, length and providers for a browse title, once. */
+    suspend fun detailed(t: Title): Title {
+        if (t.detailed) return t
+        detailCache[key(t)]?.let { return it }
+        val full = withContext(Dispatchers.IO) {
+            runCatching { foyer.tmdb.details(t.type, t.id, region()) }.getOrNull()
+        } ?: return t
+        detailCache[key(t)] = full
+        return full
+    }
+
+    /** Pressing a card: make sure we know where it streams, then open it. */
+    fun open(t: Title) {
+        viewModelScope.launch { perform(watchAction(detailed(t))) }
+    }
+
+    fun inMyList(t: Title): Boolean = myList.any { it.id == t.id && it.type == t.type }
+
+    fun toggleMyList(t: Title) {
+        myList = if (inMyList(t)) myList.filterNot { it.id == t.id && it.type == t.type } else listOf(t) + myList
+        foyer.prefs.myList = foyer.tmdb.serialize(myList).toString()
+    }
+
+    private fun key(t: Title) = "${t.type}:${t.id}"
 
     fun refreshApps() {
         viewModelScope.launch { apps = withContext(Dispatchers.IO) { Apps.load(foyer) } }
@@ -103,6 +175,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun watchAction(t: Title): Watch {
+        if (!t.detailed) return Watch.Pending(t)
         val services = t.providers.mapNotNull { Services.forProviderName(it) }.distinct()
         val installed = services.firstNotNullOfOrNull { s ->
             s.packages.firstOrNull { Apps.isInstalled(foyer, it) }?.let { Watch.Open(s.label, it) }
@@ -117,6 +190,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             is Watch.Open -> Apps.launch(foyer, w.pkg)
             is Watch.Install -> Apps.openStorePage(foyer, w.pkg)
             is Watch.Search -> Apps.openSearch(foyer, w.query)
+            is Watch.Pending -> open(w.title)
         }
     }
 

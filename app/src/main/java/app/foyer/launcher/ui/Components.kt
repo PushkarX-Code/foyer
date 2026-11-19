@@ -56,6 +56,15 @@ import java.util.Date
 
 private val Pill = RoundedCornerShape(50)
 
+val AllTabs = listOf(Screen.HOME, Screen.MOVIES, Screen.SHOWS, Screen.APPS, Screen.LIBRARY)
+/** Without an artwork key there is nothing to browse, so only these show. */
+val AppsOnlyTabs = listOf(Screen.HOME, Screen.APPS, Screen.LIBRARY)
+
+private fun tabLabel(s: Screen) = when (s) {
+    Screen.HOME -> "Home"; Screen.MOVIES -> "Movies"; Screen.SHOWS -> "Shows"
+    Screen.APPS -> "Apps"; Screen.LIBRARY -> "Library"; Screen.SETTINGS -> "Settings"
+}
+
 @Composable
 fun GlassBox(modifier: Modifier = Modifier, shape: Shape = Pill, content: @Composable () -> Unit) {
     Box(
@@ -128,15 +137,14 @@ fun Clock() {
 }
 
 @Composable
-fun TopBar(current: Screen, onNavigate: (Screen) -> Unit, onSearch: () -> Unit) {
+fun TopBar(current: Screen, onNavigate: (Screen) -> Unit, onSearch: () -> Unit, tabs: List<Screen> = AllTabs) {
     Row(
         Modifier.fillMaxWidth().padding(start = 44.dp, end = 44.dp, top = 22.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         GlassBox(Modifier.height(34.dp)) {
             Row(Modifier.padding(horizontal = 4.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                PillButton("Home", current == Screen.HOME, { onNavigate(Screen.HOME) })
-                PillButton("Apps", current == Screen.APPS, { onNavigate(Screen.APPS) })
+                tabs.forEach { tab -> PillButton(tabLabel(tab), current == tab, { onNavigate(tab) }) }
             }
         }
         Spacer(Modifier.weight(1f))
@@ -202,11 +210,12 @@ fun TitleCard(
     loader: ImageLoader,
     onFocus: () -> Unit,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val shape = RoundedCornerShape(10.dp)
     Surface(
         onClick = onClick,
-        modifier = Modifier
+        modifier = modifier
             .size(width = 200.dp, height = 112.dp)
             .onFocusGained(onFocus),
         shape = ClickableSurfaceDefaults.shape(shape),

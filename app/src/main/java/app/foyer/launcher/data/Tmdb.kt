@@ -26,7 +26,13 @@ data class Title(
     val backdrop: String,
     val logo: String?,
     val providers: List<String>,
+    /** False for titles straight from a browse list: logo, length and providers are
+     *  fetched when the title is focused or opened. */
+    val detailed: Boolean = true,
 )
+
+/** A named row of titles on the Movies or Shows tab. */
+data class Row(val title: String, val items: List<Title>)
 
 object TmdbImages {
     fun url(path: String, size: String) = "https://image.tmdb.org/t/p/$size$path"
@@ -79,9 +85,64 @@ class Tmdb(private val token: String, private val http: OkHttpClient, private va
         titles
     }
 
-    private fun details(item: JSONObject, region: String): Title {
-        val type = item.getString("media_type")
-        val id = item.getInt("id")
+    /**
+     * Rows for the Movies (type "movie") or Shows ("tv") tab, all streamable in
+     * [region]. Cache-first like the home feed; titles arrive without details.
+     */
+    suspend fun browse(type: String, region: String, cache: File): List<Row> = withContext(Dispatchers.IO) {
+        if (cache.exists() && System.currentTimeMillis() - cache.lastModified() < 6 * 3600_000L) {
+            runCatching { return@withContext parseRows(JSONArray(cache.readText())) }
+        }
+        val base = "/discover/$type?watch_region=$region&with_watch_monetization_types=flatrate&language=en-US"
+        val specs = buildList {
+            add("Popular to stream" to "$base&sort_by=popularity.desc")
+            add("Top rated" to "$base&sort_by=vote_average.desc&vote_count.gte=${if (type == "movie") 1000 else 300}")
+            if (region == "IN") add("Hindi" to "$base&sort_by=popularity.desc&with_original_language=hi")
+            val genres = if (type == "movie") listOf(28 to "Action", 35 to "Comedy", 53 to "Thriller", 878 to "Science fiction")
+            else listOf(80 to "Crime", 18 to "Drama", 35 to "Comedy", 10765 to "Sci-fi and fantasy")
+            genres.forEach { (id, name) -> add(name to "$base&sort_by=popularity.desc&with_genres=$id") }
+        }
+        val rows = coroutineScope {
+            specs.map { (name, path) ->
+                async {
+                    runCatching {
+                        val res = get(path).getJSONArray("results")
+                        val items = (0 until res.length()).map { res.getJSONObject(it) }
+                            .filter { it.optString("backdrop_path").isNotBlank() }
+                            .map { brief(it, type) }
+                        Row(name, items)
+                    }.getOrNull()
+                }
+            }.awaitAll()
+        }.filterNotNull().filter { it.items.size >= 4 }
+        if (rows.isNotEmpty()) cache.writeText(JSONArray().apply {
+            rows.forEach { r -> put(JSONObject().put("title", r.title).put("items", serialize(r.items))) }
+        }.toString())
+        rows
+    }
+
+    private fun brief(o: JSONObject, type: String): Title {
+        val date = o.optString(if (type == "movie") "release_date" else "first_air_date")
+        val genreId = o.optJSONArray("genre_ids")?.optInt(0) ?: 0
+        return Title(
+            id = o.getInt("id"), type = type,
+            name = o.optString(if (type == "movie") "title" else "name"),
+            overview = o.optString("overview"), year = date.take(4),
+            genre = GENRES[genreId] ?: "", length = "",
+            backdrop = o.getString("backdrop_path"), logo = null, providers = emptyList(), detailed = false,
+        )
+    }
+
+    private fun parseRows(arr: JSONArray) = (0 until arr.length()).map { i ->
+        val o = arr.getJSONObject(i)
+        Row(o.getString("title"), parse(o.getJSONArray("items")))
+    }
+
+    private fun details(item: JSONObject, region: String): Title =
+        details(item.getString("media_type"), item.getInt("id"), region)
+
+    /** Full details for one title: logo, genre, length and where it streams. */
+    fun details(type: String, id: Int, region: String): Title {
         val d = get("/$type/$id?language=en-US&append_to_response=images,watch/providers&include_image_language=en,null")
 
         val logo = d.optJSONObject("images")?.optJSONArray("logos")?.let { logos ->
@@ -130,18 +191,19 @@ class Tmdb(private val token: String, private val http: OkHttpClient, private va
         }
     }
 
-    private fun serialize(list: List<Title>) = JSONArray().apply {
+    fun serialize(list: List<Title>) = JSONArray().apply {
         list.forEach { t ->
             put(JSONObject().apply {
                 put("id", t.id); put("type", t.type); put("name", t.name); put("overview", t.overview)
                 put("year", t.year); put("genre", t.genre); put("length", t.length)
                 put("backdrop", t.backdrop); put("logo", t.logo ?: JSONObject.NULL)
                 put("providers", JSONArray(t.providers))
+                put("detailed", t.detailed)
             })
         }
     }
 
-    private fun parse(arr: JSONArray) = (0 until arr.length()).map { i ->
+    fun parse(arr: JSONArray) = (0 until arr.length()).map { i ->
         val o = arr.getJSONObject(i)
         Title(
             id = o.getInt("id"), type = o.getString("type"), name = o.getString("name"),
@@ -149,6 +211,16 @@ class Tmdb(private val token: String, private val http: OkHttpClient, private va
             length = o.getString("length"), backdrop = o.getString("backdrop"),
             logo = if (o.isNull("logo")) null else o.getString("logo"),
             providers = o.getJSONArray("providers").let { p -> (0 until p.length()).map { p.getString(it) } },
+            detailed = o.optBoolean("detailed", true),
         )
     }
 }
+
+private val GENRES = mapOf(
+    28 to "Action", 12 to "Adventure", 16 to "Animation", 35 to "Comedy", 80 to "Crime",
+    99 to "Documentary", 18 to "Drama", 10751 to "Family", 14 to "Fantasy", 36 to "History",
+    27 to "Horror", 10402 to "Music", 9648 to "Mystery", 10749 to "Romance", 878 to "Science Fiction",
+    53 to "Thriller", 10752 to "War", 37 to "Western", 10759 to "Action & Adventure", 10762 to "Kids",
+    10763 to "News", 10764 to "Reality", 10765 to "Sci-Fi & Fantasy", 10766 to "Soap", 10767 to "Talk",
+    10768 to "War & Politics",
+)

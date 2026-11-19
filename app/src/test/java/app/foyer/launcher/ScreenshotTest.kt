@@ -21,6 +21,9 @@ import app.foyer.launcher.data.WatchNextResult
 import app.foyer.launcher.perf.DeviceProfile
 import app.foyer.launcher.perf.Tier
 import app.foyer.launcher.ui.AppsContent
+import app.foyer.launcher.ui.BrowseContent
+import app.foyer.launcher.ui.LibraryContent
+import app.foyer.launcher.data.Row
 import app.foyer.launcher.ui.HomeContent
 import app.foyer.launcher.ui.SettingsContent
 import app.foyer.launcher.ui.SettingsState
@@ -160,6 +163,43 @@ class ScreenshotTest {
                     version = "0.1.3",
                 ),
                 onSetTier = {}, onChooseHome = {}, onOpenTvSettings = {}, onNavigate = {}, onSearch = {},
+            )
+        }
+    }
+
+    /** Real Movies-tab data saved from TMDB into FOYER_ART_DIR/movies.tsv. */
+    private val movies by lazy {
+        val lines = artDir?.resolve("movies.tsv")?.takeIf { it.exists() }?.readLines().orEmpty().map { it.split('\t') }
+        val hero = lines.firstOrNull { it[0] == "HERO" }?.let {
+            Title(it[1].toInt(), "movie", it[2], it[9], it[3], it[4], it[5], "/${it[6]}", it[7].ifBlank { null }?.let { l -> "/$l" }, listOf(it[8]))
+        }
+        val rows = lines.filter { it[0] == "ROW" }.groupBy { it[1] }.map { (name, items) ->
+            Row(name, items.map { Title(it[2].toInt(), "movie", it[3], it[7], it[4], it[5], "", "/${it[6]}", null, emptyList(), detailed = false) })
+        }
+        hero to rows
+    }
+
+    @Test
+    fun moviesTab() = paparazzi.snapshot {
+        val (hero, rows) = movies
+        Frame {
+            BrowseContent(
+                screen = Screen.MOVIES, rows = rows, state = ArtworkState.READY, hero = hero, myList = emptyList(),
+                profile = profile(Tier.LITE), loader = ImageLoader.Builder(paparazzi.context).build(),
+                actionFor = { Watch.Open("Prime Video", "primevideo") },
+                onPreview = {}, onOpen = {}, onPerform = {}, onToggleList = {}, onNavigate = {}, onSearch = {},
+            )
+        }
+    }
+
+    @Test
+    fun library() = paparazzi.snapshot {
+        val saved = movies.second.flatMap { it.items }.distinctBy { it.id }.take(7)
+        Frame {
+            LibraryContent(
+                myList = saved, watchNext = WatchNextResult(WatchNextAccess.BLOCKED, emptyList()),
+                profile = profile(Tier.LITE), loader = ImageLoader.Builder(paparazzi.context).build(),
+                onOpen = {}, onNavigate = {}, onSearch = {},
             )
         }
     }

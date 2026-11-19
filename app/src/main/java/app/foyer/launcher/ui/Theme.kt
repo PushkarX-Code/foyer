@@ -46,5 +46,7 @@ object Icons {
         pathData = PathParser().parsePathString("M7 4.5v15l12.5-7.5z").toNodes(),
         fill = SolidColor(Color.White),
     ).build()
+    val Plus = stroke("plus", "M12 5v14", "M5 12h14")
+    val Check = stroke("check", "M5 12.5l4.5 4.5L19 7")
     val Download = stroke("download", "M12 4v11", "M7 10l5 5 5-5", "M5 20h14")
 }

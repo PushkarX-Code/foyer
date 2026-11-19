@@ -33,6 +33,7 @@ fun AppsScreen(vm: HomeViewModel, profile: DeviceProfile) {
         onNavigate = { vm.screen = it },
         onLaunchApp = { Apps.launch(ctx, it) },
         onSearch = { Apps.openSearch(ctx) },
+        tabs = if (vm.hasArtwork) AllTabs else AppsOnlyTabs,
     )
 }
 
@@ -43,12 +44,13 @@ fun AppsContent(
     onNavigate: (Screen) -> Unit,
     onLaunchApp: (String) -> Unit,
     onSearch: () -> Unit,
+    tabs: List<Screen> = AllTabs,
 ) {
     val first = remember { FocusRequester() }
     LaunchedEffect(apps.isNotEmpty()) { first.requestFocusWhenReady() }
 
     Column(Modifier.fillMaxSize().background(Palette.Ink)) {
-        TopBar(Screen.APPS, onNavigate = onNavigate, onSearch = onSearch)
+        TopBar(Screen.APPS, onNavigate = onNavigate, onSearch = onSearch, tabs = tabs)
         Spacer(Modifier.height(22.dp))
         RowTitle("All apps")
         LazyVerticalGrid(

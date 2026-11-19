@@ -39,6 +39,14 @@
   #pick .card { right: -60px; top: 50%; transform: translateY(-50%); width: 980px; height: 620px; }
   #pick .card img { position: absolute; width: 1680px; left: 0; top: -150px; }
 
+
+  #browse { height: 1000px; }
+  #browse .text { left: 110px; width: 470px; }
+  #browse .glow { position: absolute; right: 0; top: 50%; width: 1300px; height: 1000px; transform: translateY(-50%);
+    background: radial-gradient(ellipse at center, rgba(60,140,200,.22), rgba(0,0,0,0) 65%); }
+  #browse .back { position: absolute; left: 640px; top: 90px; width: 900px; opacity: .9; }
+  #browse .front { position: absolute; left: 760px; top: 420px; width: 900px; }
+  #browse .tv { position: absolute; left: 0; top: 0; transform: none; width: 100%; }
   #apps { height: 980px; }
   #apps .text { position: absolute; top: 100px; left: 0; right: 0; width: auto; transform: none; text-align: center; }
   #apps .text p { margin: 20px auto 0; width: 760px; }
@@ -87,6 +95,16 @@
     <p class="lead">Froyer shows what's popular and actually streaming in your country, with each title's real artwork. One press opens the app that has it, or its Play Store page if you don't have it yet.</p>
   </div>
   <div class="card"><img src="../screens/home.png"></div>
+</section>
+
+<section id="browse" class="feature">
+  <div class="glow"></div>
+  <div class="text">
+    <h2>Movies, shows and your list.</h2>
+    <p class="lead">Browse what streams in your country by mood: popular, top rated, Hindi, action and more. Press + to save anything to your list. It stays on your TV.</p>
+  </div>
+  <div class="back"><div class="tv"><img class="shot" src="../screens/library.png"></div></div>
+  <div class="front"><div class="tv"><img class="shot" src="../screens/movies.png"></div></div>
 </section>
 
 <section id="apps">
